@@ -81,7 +81,7 @@ void createNewPipe(int sizeI, int sizeJ, int pipeNum, int pipeNumToRegen,
                 // start to populate pipePos
                 pipePos[i][0] = pos;
                 pipePos[i][1] = len;
-                pipePos[i][2] = 1; // set initial pipe to be from bottom
+
                 int initialPos = sizeI-1;
                 // every other pipe will be on opposite sides. starting with pipe index 1
 
@@ -98,7 +98,7 @@ void createNewPipe(int sizeI, int sizeJ, int pipeNum, int pipeNumToRegen,
                 } else { // bottom side, go from bottom up
                         // populate grid
 
-                         for (int j = sizeI-1; j > sizeI-len; j--) {
+                         for (int j = sizeI; j > sizeI-len; j--) {
                                 grid[j][pos] =  '|';
                         }
 
@@ -127,21 +127,30 @@ int movePipes(int sizeI, int sizeJ, int pipeNum,
 
 	int pipesToRemove = 0; // Default is that no pipes go out of bounds
 	// Now loop through each pipe, attempt to move it to the left
-	for (int i = 0; i < pipeNum; i++) {
+	for (int i = 0; i <  pipeNum; i++) {
 
+		int pos = pipePos[i][0];
+		int len = pipePos[i][1];
 		// out of bounds check
-		if (pipePos[i][0] - 1 == -1) { // we gotta regen it cause it will be out of bounds
+		if (pipePos[i][0] - 1 < 0) { // we gotta regen it cause it will be out of bounds
 			createNewPipe(sizeI, sizeJ, pipeNum, i, pipePos, grid);
+			// Clear old pipe from grid
+			if (i % 2 == 0) {		// del top pipe
+				for (int j = 0; j < len; j++) {
+					grid[j][pos] = ' ';
+				}
+			}
+			else { 				// del bottom pipe
+				for (int j = sizeI-1; j > sizeI-len; j--) {
+					grid[j][pos] = ' ';
+				}
+			}
 
 		} else { // we good, it can be moved, now enter loop to move entirety of pipe
 			// no need to check for collision with the new pipe, as it is on opposite side
-
-			// get len and pos
-			int pos = pipePos[i][0];
-			int len = pipePos[i][1];
 			// every other pipe will be on opposite sides. index 0 is on bottom, 1 top etc...
 			if (i % 2 == 0) {		// Shift pipe (top) over to left
-				 for (int j = 1; j < len; j++) {
+				 for (int j = 0; j < len; j++) {
 
 					// check for collide with bird
                                 	if (grid[j][pos-1] == 'a') {
@@ -218,7 +227,7 @@ void generatePipes(int sizeI, int sizeJ, int pipeNum,
 		} else { // bottom side, go from bottom up
 			// populate grid
 
-			 for (int j = sizeI-1; j > sizeI-len; j--) {
+			 for (int j = sizeI; j > sizeI-len; j--) {
 				grid[j][pos] =  '|';
                         }
 
@@ -233,7 +242,7 @@ void generatePipes(int sizeI, int sizeJ, int pipeNum,
 int game(int sizeI, int sizeJ, char grid[sizeI][sizeJ]) {
 
 	int score = 0;
-	int numLoops = 10;
+	int numLoops = 50;
 	int pipeNum = 10;
 
 	// store initial bird position
@@ -273,28 +282,43 @@ int game(int sizeI, int sizeJ, char grid[sizeI][sizeJ]) {
 		// invalid input or user failed to respond, move bird down by gravitySpace
 		else {
 
-			// Update bidPos
-			birdPos += sizeI/8;
-			fflush(stdout); // same as above comment
+			// Prevent the bird from falling off the face of the Earth
+			if (birdPos +sizeI/8 <= sizeI) {
+				// Update bidPos
+				birdPos += sizeI/8;
+				fflush(stdout); // same as above comment
+			} else { // Sink bird to the bottom
+				birdPos = sizeI-1;
+			}
 		}
 
 		// Put in new birdPos
 		grid[birdPos][0] = 'a';
+
+		// Clear the screen so we only have the one graph
+		system("clear");
+
+		// Print grid header
+		for (int j = 0; j < sizeJ; j++) {
+			printf("%c", '_');
+		} printf("\n");
+
+
+
 		// Now print the grid
 		for (int i = 0; i < sizeI; i++) {
         		for (int j = 0; j < sizeJ; j++) {
        				 printf("%c", grid[i][j]);
         		}
       		  printf("%c", '\n');
-		}
+		} 
+		// Print the grid footer
+		for (int j = 0; j < sizeJ; j++) {
+			printf("%c", 'Q');
+		} printf("\n");
+		fflush(stdout);
 
 
-
-		if (x == numLoops){
-			collide = 1;
-		}
-
-		x++;
 
 		// now attempt to  move all the pipes to the left
 		int result = movePipes(sizeI, sizeJ, pipeNum, pipePos, grid);
@@ -303,7 +327,7 @@ int game(int sizeI, int sizeJ, char grid[sizeI][sizeJ]) {
 		if (result == -1) {
 			return score;
 		}
-
+		score++;
 
 	}
 
@@ -327,10 +351,6 @@ int main() {
 	// Create the bird (bird will be the character 'a'
 	grid[sizeI/2][0] =  'a';
 
-	// Create the ground (ground will be character '_'
-	for (int j = 0; j < sizeJ; j++) {
-		grid[sizeI-1][j] = '_';
-	}
 
 
 	/*	 Debug stuff to ensure I remember how to print an array of known
@@ -353,7 +373,7 @@ int main() {
 
 	// working = changes made to grid in game are done right, is updated here
 
-	printf("%s %i, %s", "\nGame over! Your score is: ", score, ". Come back soon!\n");
+	printf("%s%i%s", "\nGame over! Your score is: ", score, ". Come back soon!\n");
 	return 0;
 }
 
