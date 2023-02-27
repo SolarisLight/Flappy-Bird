@@ -31,10 +31,10 @@ int checkKey() {
 
     /* Listening for input stream for any activity */
     ready_for_reading = select(1, &input_set, NULL, NULL, &timeout);
-    /* Here, first parameter is number of FDs in the set, 
+    /* Here, first parameter is number of FDs in the set,
      * second is our FD set for reading,
      * third is the FD set in which any write activity needs to updated,
-     * which is not required in this case. 
+     * which is not required in this case.
      * Fourth is timeout
      */
 
@@ -277,18 +277,22 @@ int game(int sizeI, int sizeJ, char grid[sizeI][sizeJ]) {
 			fflush(stdout); // C hates me, force flush the stream out so it prints now, not after loop
 
 			// Update bird pos in grid
-			birdPos -= sizeI/2/5;
+			if (birdPos - sizeI/2/5 >= 0) {
+				birdPos -= sizeI/2/5;
+			}
 		}
 		// invalid input or user failed to respond, move bird down by gravitySpace
 		else {
 
 			// Prevent the bird from falling off the face of the Earth
 			if (birdPos +sizeI/8 <= sizeI) {
-				// Update bidPos
+				// bird dies if touch ground
 				birdPos += sizeI/8;
 				fflush(stdout); // same as above comment
-			} else { // Sink bird to the bottom
-				birdPos = sizeI-1;
+
+			}
+			 else { // Sink bird to the bottom and kill it
+				return score;
 			}
 		}
 
